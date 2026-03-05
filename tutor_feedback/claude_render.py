@@ -259,6 +259,10 @@ def _validate_render(text: str, style: StyleCard) -> list[str]:
             f"Word count {word_count} exceeds limit {style.word_limit} "
             f"(+15% tolerance = {int(style.word_limit * 1.15)})"
         )
+    if getattr(style, "word_min", 0) and word_count < style.word_min:
+        errors.append(
+            f"Word count {word_count} is below minimum {style.word_min}"
+        )
     for section in style.required_sections:
         if section.lower() not in text.lower():
             errors.append(f"Missing required section heading: '{section}'")

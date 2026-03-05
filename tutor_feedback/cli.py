@@ -13,7 +13,7 @@ from rich.table import Table
 
 from tutor_feedback import __version__
 from tutor_feedback.config import get_settings
-from tutor_feedback.utils import setup_logging, open_in_finder, require_key
+from tutor_feedback.utils import setup_logging, open_in_finder, require_key, notify_macos
 
 app = typer.Typer(
     name="tutor-feedback",
@@ -187,6 +187,56 @@ def run(
     meta.timings = timings
     save_meta(session_dir, meta)
     save_to_db(settings.data_dir, meta)
+
+    # ── Machine-readable result.json for automations ───────────────
+    from tutor_feedback.automation.result_schema import (
+        Result,
+        InputRecording,
+        Outputs,
+        FeedbackEntry,
+        TimingsMs,
+    )
+    transcribe_ms = int(timings.get("transcribe", 0) * 1000)
+    extract_ms = int(timings.get("extract", 0) * 1000)
+    render_ms = sum(int(timings.get(f"render_{p}", 0) * 1000) for p in platform)
+    feedback_entries = {}
+    for p in platform:
+        fb_path = session_dir / f"feedback_{p}.txt"
+        if fb_path.is_file():
+            text = fb_path.read_text(encoding="utf-8")
+            preview = text.replace("\n", " ").strip()
+            if len(preview) > 240:
+                preview = preview[:237] + "..."
+            feedback_entries[p] = FeedbackEntry(path=str(fb_path.resolve()), text_preview=preview)
+    st = input_path.stat()
+    result = Result(
+        session_id=session_id,
+        student=student,
+        created_at_iso=now.isoformat(),
+        trigger="cli",
+        input_recording=InputRecording(
+            original_path=str(input_path.resolve()),
+            processed_path=None,
+            sha256="",
+            size_bytes=st.st_size,
+            mtime=st.st_mtime,
+        ),
+        outputs=Outputs(
+            session_folder=str(session_dir.resolve()),
+            transcript_txt=(session_dir / "transcript.txt").read_text(encoding="utf-8"),
+            transcript_json=(session_dir / "transcript.json").read_text(encoding="utf-8"),
+            extracted_json=(session_dir / "extracted.json").read_text(encoding="utf-8"),
+            homework_txt=(session_dir / "homework.txt").read_text(encoding="utf-8"),
+            feedback=feedback_entries,
+        ),
+        timings_ms=TimingsMs(
+            transcribe=transcribe_ms,
+            extract=extract_ms,
+            render=render_ms,
+            total=transcribe_ms + extract_ms + render_ms,
+        ),
+    )
+    (session_dir / "result.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
 
     # ── Summary ────────────────────────────────────────────────────
     console.print()
@@ -368,6 +418,180 @@ def serve(
         threading.Timer(1.2, lambda: webbrowser.open(f"http://{host}:{port}")).start()
 
     uvicorn.run("tutor_feedback.web:app", host=host, port=port, log_level="warning")
+
+
+@app.command()
+def watch(
+    folder_path: Annotated[
+        Path,
+        typer.Argument(help="Directory to watch for new recording files."),
+    ],
+    platform: Annotated[
+        List[str],
+        typer.Option("--platform", "-p", help="Platform style(s). Repeat for multiple. Default: private."),
+    ] = None,
+    student_from_filename: Annotated[
+        bool,
+        typer.Option("--student-from-filename", help="Derive student name from filename (e.g. Andy_2026-03-05.m4a -> Andy)."),
+    ] = False,
+    student: Annotated[
+        str,
+        typer.Option("--student", "-s", help="Default student name when not using --student-from-filename."),
+    ] = "Unknown",
+    move: Annotated[
+        bool,
+        typer.Option("--move/--no-move", help="Move recordings to processed/ or failed/ after run."),
+    ] = True,
+    stable_seconds: Annotated[
+        float,
+        typer.Option("--stable-seconds", help="Seconds to wait for file size to be stable before processing."),
+    ] = 10.0,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Reprocess even if same file was already processed."),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable debug logging."),
+    ] = False,
+) -> None:
+    """Watch a folder for new recordings and run the pipeline automatically."""
+    setup_logging(verbose)
+    settings = get_settings()
+    platforms = platform if platform is not None and len(platform) > 0 else ["private"]
+
+    from tutor_feedback.ffmpeg_utils import check_ffmpeg
+    from tutor_feedback.styles import list_styles
+    from tutor_feedback.automation.watcher import run_watch
+
+    check_ffmpeg()
+    require_key(settings.anthropic_api_key)
+    available = list_styles(settings.styles_dir)
+    for p in platforms:
+        if p not in available:
+            console.print(f"[bold red]Error:[/] Unknown platform '{p}'. Available: {', '.join(available)}")
+            raise typer.Exit(1)
+
+    folder = Path(folder_path).resolve()
+    console.print(f"Watching [bold]{folder}[/] for new recordings. Press Ctrl+C to stop.")
+    run_watch(
+        watch_folder=folder,
+        platforms=platforms,
+        student_from_filename=student_from_filename,
+        default_student=student,
+        move=move,
+        stable_seconds=stable_seconds,
+        force=force,
+    )
+
+
+@app.command(name="webhook-serve")
+def webhook_serve(
+    port: Annotated[
+        int,
+        typer.Option("--port", help="Port for the webhook server."),
+    ] = 8787,
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Host to bind to."),
+    ] = "127.0.0.1",
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable debug logging."),
+    ] = False,
+) -> None:
+    """Run the webhook server for n8n / automation triggers."""
+    import uvicorn
+
+    setup_logging(verbose)
+    console.print(f"Webhook server at [bold]http://{host}:{port}[/]")
+    console.print("  POST /trigger         – enqueue a job (recording_path or recording_url, student, platforms)")
+    console.print("  GET  /jobs/<id>      – job status and result")
+    console.print("  POST /jobs/<id>/run  – run a queued job immediately")
+    secret = __import__("os").environ.get("TUTOR_FEEDBACK_WEBHOOK_SECRET") or __import__("os").environ.get("TUTOR_FEEDBACK_SECRET")
+    if secret:
+        console.print("  [dim]Auth: X-TUTOR-FEEDBACK-SECRET header required[/]")
+    else:
+        console.print("  [yellow]No TUTOR_FEEDBACK_WEBHOOK_SECRET set – requests are unauthenticated[/]")
+    uvicorn.run("tutor_feedback.automation.webhook_server:app", host=host, port=port, log_level="warning" if not verbose else "info")
+
+
+PASTE_PLATFORMS_DEFAULT = ["humanities", "intergreat", "private"]
+PASTE_PLATFORMS_ALL = ["humanities", "intergreat", "private", "keystone-quick"]
+
+
+@app.command()
+def paste(
+    student: Annotated[
+        str,
+        typer.Option("--student", "-s", help="Student's first name. Default: Unknown."),
+    ] = "Unknown",
+    platform: Annotated[
+        List[str],
+        typer.Option("--platform", "-p", help="Platform style(s). Repeat for multiple. Default: humanities, intergreat, private."),
+    ] = None,
+    text: Annotated[
+        Optional[str],
+        typer.Option("--text", "-t", help="Pasted text directly. If omitted, read from STDIN."),
+    ] = None,
+    source: Annotated[
+        str,
+        typer.Option("--source", help="Input source label (stored in metadata). Default: granola."),
+    ] = "granola",
+    meeting_source: Annotated[
+        Optional[str],
+        typer.Option("--meeting-source", help="Meeting source (e.g. zoom, gmeet). Metadata only."),
+    ] = None,
+    open_folder: Annotated[
+        bool,
+        typer.Option("--open", help="Open session folder in Finder when done."),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable debug logging."),
+    ] = False,
+) -> None:
+    """Generate feedback from pasted notes/transcript (e.g. Granola). pbpaste | tutor-feedback paste --student Andy ..."""
+    import sys
+
+    log = setup_logging(verbose)
+    require_key(get_settings().anthropic_api_key)
+
+    platforms = platform if platform is not None and len(platform) > 0 else PASTE_PLATFORMS_DEFAULT
+    for p in platforms:
+        if p not in PASTE_PLATFORMS_ALL:
+            console.print(
+                f"[bold red]Error:[/] Unknown paste platform '{p}'. "
+                f"Allowed: {', '.join(PASTE_PLATFORMS_ALL)}"
+            )
+            raise typer.Exit(1)
+
+    if text is not None:
+        raw = text
+    else:
+        raw = sys.stdin.read()
+    if not raw.strip():
+        console.print("[bold red]Error:[/] No input. Use --text '...' or pipe from pbpaste.")
+        raise typer.Exit(1)
+
+    from tutor_feedback.inputs import paste_to_session_input
+    from tutor_feedback.paste_pipeline import process_pasted_text
+
+    session_input = paste_to_session_input(
+        raw,
+        student_name=student,
+        source=source,
+        meeting_source=meeting_source,
+    )
+    session_dir = process_pasted_text(session_input, platforms)
+    platforms_str = ", ".join(platforms)
+    notify_macos(
+        "Tutor Feedback Ready",
+        f"{student} • {platforms_str} • click to open folder",
+    )
+    console.print(f"[bold green]Done.[/] Session folder: [bold]{session_dir}[/]")
+    if open_folder:
+        open_in_finder(session_dir)
 
 
 @app.callback(invoke_without_command=True)

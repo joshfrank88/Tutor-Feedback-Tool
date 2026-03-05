@@ -42,3 +42,12 @@ def require_key(key: str) -> None:
             "Export it or add it to your .env file.  See .env.example."
         )
         sys.exit(1)
+
+
+def notify_macos(title: str, body: str, open_path: str | None = None) -> None:
+    """Show a macOS notification."""
+    try:
+        script = f'display notification "{body.replace(chr(34), chr(39))}" with title "{title.replace(chr(34), chr(39))}"'
+        subprocess.run(["osascript", "-e", script], capture_output=True, timeout=2)
+    except (FileNotFoundError, subprocess.TimeoutExpired, Exception):
+        pass

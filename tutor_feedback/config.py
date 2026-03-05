@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,4 +23,7 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
-    return Settings()
+    s = Settings()
+    if os.environ.get("TUTOR_FEEDBACK_DATA_DIR"):
+        s.data_dir = Path(os.environ["TUTOR_FEEDBACK_DATA_DIR"])
+    return s

@@ -10,7 +10,7 @@ from pathlib import Path
 
 log = logging.getLogger("tutor_feedback")
 
-SUPPORTED_EXTENSIONS = {".m4a", ".mp3", ".wav", ".mp4", ".webm", ".ogg", ".flac", ".aac"}
+SUPPORTED_EXTENSIONS = {".m4a", ".mp3", ".wav", ".mp4", ".mov", ".webm", ".ogg", ".flac", ".aac"}
 
 
 def check_ffmpeg() -> None:

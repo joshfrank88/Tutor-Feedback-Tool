@@ -1,0 +1,17 @@
+name: private
+tone: "warm, concise, action-oriented"
+word_limit: 120
+word_min: 60
+format: "bullets"
+required_sections:
+  - "Wins"
+  - "Next steps"
+  - "Homework"
+rules:
+  - "Max 3 bullets under Wins and Next steps."
+  - "Homework must include estimated time if available."
+do_rules:
+  - "Use simple language."
+dont_rules:
+  - "No negativity; frame gaps as next steps."
+  - "No sensitive speculation."

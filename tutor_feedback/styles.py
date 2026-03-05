@@ -25,6 +25,7 @@ class StyleCard(BaseModel):
     name: str
     tone: str = "warm and professional"
     word_limit: int = 400
+    word_min: int = 0  # optional minimum (e.g. 50 for intergreat paste)
     required_sections: list[str] = Field(default_factory=list)
     format: str = "mixed"  # "bullets" | "narrative" | "mixed" | "fields" | "chat"
     do_rules: list[str] = Field(default_factory=list)

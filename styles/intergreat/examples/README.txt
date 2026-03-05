@@ -1,20 +1,33 @@
-HOW TO ADD EXAMPLES
-===================
-Drop .txt files into this folder containing real Intergreat feedback
-you've written in the past. Name them anything (e.g. 01.txt, 02.txt).
+name: intergreat
+notes: "Intergreat output must follow the fixed 6-heading structure in order."
+prompts:
+  prompt1:
+    label: "Prompt 1"
+    min_words: 50
+    max_words: 140
+    instructions: |
+      Write a tutor feedback update using exactly these headings in this exact order:
+      1. Knowledge reviewed
+      2. New knowledge
+      3. Areas for improvement
+      4. Progress made
+      5. Homework assigned
+      6. Next lesson preview
 
-Each file should contain a complete feedback entry — the kind of text
-you'd paste into Intergreat's form fields. For field-based feedback,
-format each file like:
-
-[Session Summary]
-We worked on quadratic equations today...
-
-[Topics Covered]
-Quadratic equations, completing the square
-
-[Progress & Strengths]
-- Got the hang of factorising simple quadratics after a few attempts...
-
-...and so on. The more examples you add, the better the voice matching.
-3-5 good examples is enough to get strong results.
+      Requirements:
+      - Parent-safe, professional, warm.
+      - Evidence-based; do not invent claims.
+      - No sensitive/pastoral speculation.
+      - Keep it between 50 and 140 words (flex as needed).
+  prompt2:
+    label: "Prompt 2"
+    min_words: 50
+    max_words: 140
+    instructions: |
+      Use the same structure and rules as Prompt 1.
+  prompt3:
+    label: "Prompt 3"
+    min_words: 50
+    max_words: 140
+    instructions: |
+      Use the same structure and rules as Prompt 1.

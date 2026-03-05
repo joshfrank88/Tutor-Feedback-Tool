@@ -1,0 +1,27 @@
+# Paste-mode Intergreat: 6 fixed headings, 50–140 words total (LOCKED)
+name: intergreat
+tone: >-
+  Professional and structured. Parent-safe, evidence-based, warm.
+  No sensitive or pastoral speculation.
+word_limit: 140
+word_min: 50
+format: sections
+output_format: text
+required_sections:
+  - "Knowledge reviewed"
+  - "New knowledge"
+  - "Areas for improvement"
+  - "Progress made"
+  - "Homework assigned"
+  - "Next lesson preview"
+do_rules:
+  - Use exactly these 6 headings in this exact order
+  - Total 50–140 words across all sections
+  - Parent-safe, professional, warm
+  - Evidence-based; do not invent claims
+  - No long quotes; brief evidence only
+dont_rules:
+  - Do not add or remove headings
+  - Do not reorder the headings
+  - Do not include tutor private notes or sensitive speculation
+  - Do not exceed 140 words or go under 50

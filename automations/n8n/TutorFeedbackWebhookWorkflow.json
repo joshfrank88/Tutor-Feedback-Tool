@@ -1,0 +1,168 @@
+{
+  "name": "Tutor Feedback – Webhook Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "tutor-feedback",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "tutor-feedback-trigger",
+      "notes": "Receive POST: recording_path OR recording_url, student, platforms. Edit Production URL if needed."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8787/trigger",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-TUTOR-FEEDBACK-SECRET", "value": "={{ $env.TUTOR_FEEDBACK_WEBHOOK_SECRET || '' }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "recording_path", "value": "={{ $json.body.recording_path }}" },
+            { "name": "recording_url", "value": "={{ $json.body.recording_url }}" },
+            { "name": "student", "value": "={{ $json.body.student || 'Student' }}" },
+            { "name": "platforms", "value": "={{ JSON.stringify($json.body.platforms || ['private']) }}" },
+            { "name": "force", "value": "={{ $json.body.force || false }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-trigger",
+      "name": "POST /trigger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "notes": "Edit url if server runs elsewhere (e.g. http://host.docker.internal:8787/trigger)"
+    },
+    {
+      "parameters": { "amount": 5, "unit": "seconds" },
+      "id": "wait-poll",
+      "name": "Wait 5s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [680, 300],
+      "notes": "Poll interval. Loop back from IF until status is succeeded/failed."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://127.0.0.1:8787/jobs/{{ $json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-TUTOR-FEEDBACK-SECRET", "value": "={{ $env.TUTOR_FEEDBACK_WEBHOOK_SECRET || '' }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-job",
+      "name": "GET job status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "notes": "Returns job_id, status, retries, error, result. result = result.json schema."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            { "id": "c1", "leftValue": "={{ $json.body.status }}", "rightValue": "succeeded", "operator": { "type": "string", "operation": "equals" } },
+            { "id": "c2", "leftValue": "={{ $json.body.status }}", "rightValue": "failed", "operator": { "type": "string", "operation": "equals" } }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "if-done",
+      "name": "IF status done",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "notes": "True = succeeded or failed. False = loop back to Wait 5s."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "result", "value": "={{ $json.body.result }}", "type": "string" },
+            { "id": "a2", "name": "session_path", "value": "={{ $json.body.session_path }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-result",
+      "name": "Result (result.json)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 200],
+      "notes": "result = full Result schema. Add Write to file or use in Notion/Email."
+    },
+    {
+      "parameters": {},
+      "id": "stub-notion",
+      "name": "Notion (stub)",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [1560, 120],
+      "disabled": true,
+      "notes": "Enable + credentials. Map result.outputs.feedback.<platform>.text_preview."
+    },
+    {
+      "parameters": {},
+      "id": "stub-email",
+      "name": "Email (stub)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1560, 280],
+      "disabled": true,
+      "notes": "Enable + SMTP. Use result.outputs.feedback.<platform>.text_preview."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"job_id\": $json.body.job_id, \"status\": $json.body.status, \"error\": $json.body.error } }}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1340, 400],
+      "notes": "Sends final status to caller. On failure, error included."
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "POST /trigger", "type": "main", "index": 0 }]] },
+    "POST /trigger": { "main": [[{ "node": "Wait 5s", "type": "main", "index": 0 }]] },
+    "Wait 5s": { "main": [[{ "node": "GET job status", "type": "main", "index": 0 }]] },
+    "GET job status": { "main": [[{ "node": "IF status done", "type": "main", "index": 0 }]] },
+    "IF status done": {
+      "main": [
+        [
+          { "node": "Result (result.json)", "type": "main", "index": 0 },
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Wait 5s", "type": "main", "index": 0 }]
+      ]
+    },
+    "Result (result.json)": { "main": [[
+      { "node": "Notion (stub)", "type": "main", "index": 0 },
+      { "node": "Email (stub)", "type": "main", "index": 0 }
+    ]] }
+  },
+  "settings": {},
+  "active": false
+}

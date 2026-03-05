@@ -1,10 +1,15 @@
-HOW TO ADD EXAMPLES
-===================
-Drop .txt files into this folder containing real Politics Explained
-feedback you've written before. Name them anything (e.g. 01.txt, 02.txt).
-
-Each file should contain a complete feedback entry — the kind of short
-paragraph (100-200 words) you'd paste into the platform's text box.
-
-The more examples you add, the better the voice matching.
-3-5 good examples is enough to get strong results.
+name: humanities_explained
+tone: "polished, explanatory, teacher clarity"
+word_limit: 200
+word_min: 100
+format: "single_paragraph"
+required_rules:
+  - "Single block of text; no headings; no bullet points."
+  - "Mention: what we covered, what went well, what to improve, and what’s next."
+  - "If homework exists, mention it briefly (one sentence)."
+do_rules:
+  - "Be evidence-based; do not invent performance claims."
+  - "Keep parent-safe and professional."
+dont_rules:
+  - "No long quotes from transcript/notes."
+  - "No sensitive/pastoral speculation."

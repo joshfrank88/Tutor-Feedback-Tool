@@ -73,6 +73,83 @@ def build_extract_prompt(
     )
 
 
+def build_extract_prompt_from_text(
+    text: str,
+    student_name: str,
+    session_datetime: str,
+    duration_minutes: float = 0.0,
+) -> str:
+    """Build extract prompt for pasted plain text (notes and/or transcript)."""
+    return (
+        f"Student name (use if not mentioned in the text): {student_name}\n"
+        f"Session date/time: {session_datetime}\n"
+        f"Approximate duration: {duration_minutes:.0f} minutes (estimate if unknown)\n\n"
+        "Below is pasted notes/transcript (plain text). Extract structured data. "
+        "Use short quote snippets or [timestamp] for evidence where applicable.\n\n"
+        f"TEXT:\n{text}"
+    )
+
+
+def extract_session_from_text(
+    text: str,
+    student_name: str,
+    session_datetime: str,
+    duration_minutes: float = 0.0,
+    *,
+    api_key: str,
+    model: str = "claude-sonnet-4-20250514",
+    max_retries: int = 2,
+) -> tuple[ExtractedSession, float]:
+    """
+    Extract structured session data from plain text (paste input).
+    Returns (ExtractedSession, elapsed_seconds).
+    """
+    client = anthropic.Anthropic(api_key=api_key)
+    user_msg = build_extract_prompt_from_text(
+        text, student_name, session_datetime, duration_minutes
+    )
+
+    errors: list[str] = []
+    for attempt in range(1, max_retries + 2):
+        prompt = user_msg
+        if errors:
+            prompt += (
+                "\n\n--- VALIDATION ERRORS FROM PREVIOUS ATTEMPT ---\n"
+                + "\n".join(f"- {e}" for e in errors)
+                + "\n\nPlease fix these errors and output corrected JSON only."
+            )
+
+        log.info("Claude extract (from text) – attempt %d/%d", attempt, max_retries + 1)
+        t0 = time.time()
+
+        response = client.messages.create(
+            model=model,
+            max_tokens=4096,
+            system=EXTRACT_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        elapsed = time.time() - t0
+
+        raw_text = response.content[0].text.strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.split("\n")
+            lines = [l for l in lines if not l.startswith("```")]
+            raw_text = "\n".join(lines)
+
+        try:
+            data = json.loads(raw_text)
+            extracted = ExtractedSession(**data)
+            log.info("Extraction validated on attempt %d (%.1fs)", attempt, elapsed)
+            return extracted, elapsed
+        except (json.JSONDecodeError, Exception) as exc:
+            errors = [str(exc)]
+            log.warning("Attempt %d failed validation: %s", attempt, exc)
+
+    raise RuntimeError(
+        f"Claude extraction failed after {max_retries + 1} attempts. Last errors: {errors}"
+    )
+
+
 def extract_session(
     transcript_json: list[dict],
     student_name: str,

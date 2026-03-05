@@ -1,0 +1,17 @@
+name: keystone_quick
+tone: professional, concise, report-like
+word_limit: 90
+word_min: 40
+format: mixed
+output_format: text
+required_sections:
+  - "Summary"
+  - "Focus next lesson"
+do_rules:
+  - Summary: 2–3 sentences only
+  - Focus next lesson: one short line
+  - 40–90 words total
+  - Paste-ready, neutral
+dont_rules:
+  - No long explanations
+  - Do not exceed 90 words or go under 40

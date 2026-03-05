@@ -1,0 +1,21 @@
+name: humanities_explained
+tone: >-
+  Professional, warm, single narrative. Written for Humanities Explained:
+  one paragraph, no headings or bullets. Evidence-based and parent-safe.
+word_limit: 200
+word_min: 100
+format: narrative
+output_format: text
+required_sections: []
+do_rules:
+  - Single paragraph only; no headings or bullet points
+  - 100–200 words total
+  - Mention what was covered, what went well, what needs work, what's next
+  - If homework exists, include one brief sentence
+  - Parent-safe, professional, warm
+  - Evidence-based; do not invent claims
+  - No long quotes from notes/transcript
+dont_rules:
+  - Do not use headings, bullets, or subheadings
+  - Do not include tutor private notes or sensitive speculation
+  - Do not exceed 200 words or go under 100
