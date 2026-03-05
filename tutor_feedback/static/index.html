@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tutor Feedback</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-focus: #6366f1;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-light: #eef2ff;
+    --green: #22c55e;
+    --green-light: #f0fdf4;
+    --amber: #f59e0b;
+    --amber-light: #fffbeb;
+    --red: #ef4444;
+    --red-light: #fef2f2;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ──────────────────────────────────── */
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  /* ── Tabs ─────────────────────────────────────── */
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tab:hover { color: var(--text); background: var(--bg); }
+  .tab.active { background: var(--accent); color: white; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Cards ────────────────────────────────────── */
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+  }
+
+  /* ── Form ─────────────────────────────────────── */
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color .15s;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-group input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+  }
+
+  /* ── Drop zone ───────────────────────────────── */
+
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .dropzone.has-file {
+    border-color: var(--green);
+    background: var(--green-light);
+    border-style: solid;
+  }
+  .dropzone-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: .5;
+  }
+  .dropzone-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .dropzone-text strong { color: var(--accent); }
+  .dropzone-filename {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--green);
+  }
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* ── Platform checkboxes ─────────────────────── */
+
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .platform-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .platform-card:hover { border-color: var(--accent); }
+  .platform-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .platform-card input { margin-top: 3px; accent-color: var(--accent); }
+  .platform-card .platform-name {
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .platform-card .platform-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* ── Buttons ──────────────────────────────────── */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  /* ── Progress ─────────────────────────────────── */
+
+  .progress-section { display: none; }
+  .progress-section.active { display: block; }
+
+  .progress-bar-container {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 0%;
+    transition: width .4s ease;
+  }
+
+  .progress-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .progress-step .step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .progress-step.active .step-dot { background: var(--accent); }
+  .progress-step.done .step-dot { background: var(--green); }
+  .progress-step.error .step-dot { background: var(--red); }
+  .progress-step .step-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .progress-step .step-msg {
+    color: var(--text-secondary);
+  }
+  .progress-step.active .step-msg { color: var(--text); font-weight: 500; }
+  .progress-step.done .step-msg { color: var(--text); }
+  .progress-step.error .step-msg { color: var(--red); }
+
+  /* ── Results ──────────────────────────────────── */
+
+  .result-banner {
+    background: var(--green-light);
+    border: 1px solid var(--green);
+    color: #166534;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 14px;
+    display: none;
+  }
+  .result-banner.error {
+    background: var(--red-light);
+    border-color: var(--red);
+    color: #991b1b;
+  }
+  .result-banner.visible { display: block; }
+
+  .result-tabs {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .result-tab {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .result-tab:hover { border-color: var(--accent); }
+  .result-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .result-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 500px;
+    overflow-y: auto;
+    line-height: 1.7;
+    font-family: 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+
+  .copy-btn {
+    float: right;
+    padding: 4px 10px;
+    font-size: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .copy-btn:hover { background: var(--bg); }
+
+  /* ── Sessions list ───────────────────────────── */
+
+  .session-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .session-row:last-child { border-bottom: none; }
+  .session-row:hover { background: var(--bg); margin: 0 -24px; padding: 14px 24px; border-radius: 8px; }
+  .session-student { font-weight: 600; font-size: 14px; min-width: 100px; }
+  .session-date { font-size: 13px; color: var(--text-secondary); min-width: 120px; }
+  .session-platforms {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    background: var(--accent-light);
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── Responsive ──────────────────────────────── */
+
+  @media (max-width: 640px) {
+    .container { padding: 16px; }
+    .card { padding: 16px; }
+    .platform-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>&#9679;</span> Tutor Feedback</h1>
+  <div class="header-meta">Local Pipeline</div>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" data-tab="new">New Session</button>
+    <button class="tab" data-tab="results">Results</button>
+    <button class="tab" data-tab="history">History</button>
+  </div>
+
+  <!-- ─── New Session Tab ──────────────────────── -->
+  <div class="tab-content active" id="tab-new">
+
+    <div id="form-section">
+      <div class="card">
+        <div class="card-title">Recording</div>
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-icon">&#9835;</div>
+          <div class="dropzone-text" id="dropzone-label">
+            <strong>Click to upload</strong> or drag and drop<br>
+            .m4a, .mp3, .wav, .mp4
+          </div>
+          <input type="file" id="file-input" accept=".m4a,.mp3,.wav,.mp4,.webm,.ogg,.flac,.aac">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Student</div>
+        <div class="form-group">
+          <label for="student-name">First name</label>
+          <input type="text" id="student-name" placeholder="e.g. Andy">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Platforms</div>
+        <div class="platform-grid" id="platform-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="run-btn" disabled>
+        Run Pipeline
+      </button>
+    </div>
+
+    <div class="progress-section" id="progress-section">
+      <div class="card">
+        <div class="card-title">Pipeline Progress</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div id="progress-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Results Tab ──────────────────────────── -->
+  <div class="tab-content" id="tab-results">
+    <div class="result-banner" id="result-banner"></div>
+    <div id="results-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128203;</div>
+        <p>Run a session to see results here</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── History Tab ──────────────────────────── -->
+  <div class="tab-content" id="tab-history">
+    <div class="card">
+      <div class="card-title">Past Sessions</div>
+      <div id="history-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">&#128197;</div>
+          <p>No sessions yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+
+  // ── State ────────────────────────────────────
+  let selectedFile = null;
+  let selectedPlatforms = new Set();
+  let currentJobId = null;
+  let currentResultFolder = null;
+
+  // ── DOM refs ─────────────────────────────────
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+
+  // ── Tabs ─────────────────────────────────────
+  $$('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      $$('.tab').forEach(t => t.classList.remove('active'));
+      $$('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      $('#tab-' + tab.dataset.tab).classList.add('active');
+
+      if (tab.dataset.tab === 'history') loadHistory();
+    });
+  });
+
+  // ── File drop zone ───────────────────────────
+  const dropzone = $('#dropzone');
+  const fileInput = $('#file-input');
+  const dropLabel = $('#dropzone-label');
+
+  ['dragenter', 'dragover'].forEach(e => {
+    dropzone.addEventListener(e, (ev) => { ev.preventDefault(); dropzone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(e => {
+    dropzone.addEventListener(e, () => dropzone.classList.remove('dragover'));
+  });
+  dropzone.addEventListener('drop', (ev) => {
+    ev.preventDefault();
+    if (ev.dataTransfer.files.length) handleFile(ev.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    dropzone.classList.add('has-file');
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    dropLabel.innerHTML = '<div class="dropzone-filename">' + file.name + ' (' + sizeMB + ' MB)</div>';
+    checkReady();
+  }
+
+  // ── Platform loading ─────────────────────────
+  async function loadStyles() {
+    try {
+      const res = await fetch('/api/styles');
+      const styles = await res.json();
+      const grid = $('#platform-grid');
+      grid.innerHTML = '';
+      styles.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'platform-card';
+        card.innerHTML =
+          '<input type="checkbox" value="' + s.name + '">' +
+          '<div>' +
+            '<div class="platform-name">' + s.name + '</div>' +
+            '<div class="platform-meta">' + s.format + ' / ' + s.word_limit + ' words' +
+              (s.examples > 0 ? ' / ' + s.examples + ' example' + (s.examples > 1 ? 's' : '') : '') +
+            '</div>' +
+          '</div>';
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName === 'INPUT') return;
+          const cb = card.querySelector('input');
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event('change'));
+        });
+        card.querySelector('input').addEventListener('change', (e) => {
+          if (e.target.checked) {
+            selectedPlatforms.add(s.name);
+            card.classList.add('selected');
+          } else {
+            selectedPlatforms.delete(s.name);
+            card.classList.remove('selected');
+          }
+          checkReady();
+        });
+        grid.appendChild(card);
+      });
+    } catch(e) {
+      console.error('Failed to load styles', e);
+    }
+  }
+
+  // ── Readiness check ──────────────────────────
+  const studentInput = $('#student-name');
+  studentInput.addEventListener('input', checkReady);
+
+  function checkReady() {
+    const ready = selectedFile && studentInput.value.trim() && selectedPlatforms.size > 0;
+    $('#run-btn').disabled = !ready;
+  }
+
+  // ── Run pipeline ─────────────────────────────
+  $('#run-btn').addEventListener('click', async () => {
+    if (!selectedFile || !studentInput.value.trim() || selectedPlatforms.size === 0) return;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('student', studentInput.value.trim());
+    formData.append('platforms', Array.from(selectedPlatforms).join(','));
+
+    $('#run-btn').disabled = true;
+    $('#form-section').style.display = 'none';
+    const ps = $('#progress-section');
+    ps.classList.add('active');
+    $('#progress-steps').innerHTML = '';
+    $('#progress-bar').style.width = '0%';
+
+    try {
+      const res = await fetch('/api/run', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Upload failed');
+      }
+      const { job_id } = await res.json();
+      currentJobId = job_id;
+      listenToJob(job_id);
+    } catch(e) {
+      showBanner(e.message, true);
+      resetForm();
+    }
+  });
+
+  // ── SSE job listener ─────────────────────────
+  function listenToJob(jobId) {
+    const source = new EventSource('/api/jobs/' + jobId + '/events');
+    const stepsEl = $('#progress-steps');
+
+    source.addEventListener('log', (e) => {
+      const data = JSON.parse(e.data);
+      $('#progress-bar').style.width = data.progress + '%';
+
+      const step = document.createElement('div');
+      step.className = 'progress-step active';
+      step.innerHTML =
+        '<div class="step-dot"></div>' +
+        '<div class="step-msg">' + escHtml(data.message) + '</div>' +
+        '<div class="step-time">' + data.timestamp + '</div>';
+      stepsEl.appendChild(step);
+      stepsEl.scrollTop = stepsEl.scrollHeight;
+
+      // Mark previous steps as done
+      const allSteps = stepsEl.querySelectorAll('.progress-step');
+      for (let i = 0; i < allSteps.length - 1; i++) {
+        allSteps[i].classList.remove('active');
+        allSteps[i].classList.add('done');
+      }
+    });
+
+    source.addEventListener('done', (e) => {
+      source.close();
+      const data = JSON.parse(e.data);
+      currentResultFolder = data.session_folder;
+
+      // Mark all steps as done
+      stepsEl.querySelectorAll('.progress-step').forEach(s => {
+        s.classList.remove('active');
+        s.classList.add('done');
+      });
+      $('#progress-bar').style.width = '100%';
+
+      showBanner('Pipeline complete! ' + data.segments + ' segments transcribed, ' +
+                 data.platforms.length + ' feedback files generated.', false);
+      loadSessionResults(data.session_folder);
+
+      setTimeout(() => {
+        $$('.tab')[1].click();
+      }, 1200);
+    });
+
+    source.addEventListener('error', (e) => {
+      if (source.readyState === EventSource.CLOSED) return;
+      try {
+        const data = JSON.parse(e.data);
+        showBanner(data.error, true);
+      } catch(_) {
+        showBanner('Connection lost', true);
+      }
+      source.close();
+
+      stepsEl.querySelectorAll('.progress-step.active').forEach(s => {
+        s.classList.remove('active');
+        s.classList.add('error');
+      });
+
+      setTimeout(resetForm, 2000);
+    });
+  }
+
+  // ── Load results ─────────────────────────────
+  async function loadSessionResults(folderName) {
+    try {
+      const res = await fetch('/api/sessions/' + folderName + '/files');
+      const files = await res.json();
+      const container = $('#results-container');
+
+      // Build file tabs and content
+      const fileNames = Object.keys(files);
+      if (fileNames.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No output files found</p></div>';
+        return;
+      }
+
+      // Order: feedback files first, then extracted, transcript, homework, meta
+      const order = ['feedback_', 'homework', 'extracted', 'transcript', 'meta'];
+      fileNames.sort((a, b) => {
+        const ai = order.findIndex(o => a.startsWith(o));
+        const bi = order.findIndex(o => b.startsWith(o));
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+
+      let tabsHtml = '<div class="result-tabs">';
+      fileNames.forEach((name, i) => {
+        const label = name.replace('.txt', '').replace('.json', '').replace(/_/g, ' ');
+        tabsHtml += '<button class="result-tab' + (i === 0 ? ' active' : '') + '" data-file="' + name + '">' + label + '</button>';
+      });
+      tabsHtml += '</div>';
+
+      const contentHtml = '<div><button class="copy-btn" id="copy-btn">Copy</button></div>' +
+                          '<pre class="result-content" id="result-pre">' + escHtml(files[fileNames[0]]) + '</pre>';
+
+      container.innerHTML = tabsHtml + contentHtml;
+
+      // Tab switching
+      container.querySelectorAll('.result-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          container.querySelectorAll('.result-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const content = files[tab.dataset.file] || '';
+          $('#result-pre').textContent = content;
+        });
+      });
+
+      // Copy button
+      $('#copy-btn').addEventListener('click', () => {
+        const text = $('#result-pre').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          $('#copy-btn').textContent = 'Copied!';
+          setTimeout(() => { $('#copy-btn').textContent = 'Copy'; }, 1500);
+        });
+      });
+
+    } catch(e) {
+      console.error('Failed to load results', e);
+    }
+  }
+
+  // ── History ──────────────────────────────────
+  async function loadHistory() {
+    try {
+      const res = await fetch('/api/sessions');
+      const sessions = await res.json();
+      const list = $('#history-list');
+
+      if (sessions.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128197;</div><p>No sessions yet</p></div>';
+        return;
+      }
+
+      let html = '';
+      sessions.forEach(s => {
+        const name = s.student_name || s.folder_name;
+        const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : s.folder_name;
+        const platforms = (s.feedback_platforms || s.platforms || []);
+        const badges = platforms.map(p => '<span class="badge">' + escHtml(p) + '</span>').join('');
+
+        html += '<div class="session-row" data-folder="' + escHtml(s.folder_name || '') + '">' +
+                '<div class="session-student">' + escHtml(name) + '</div>' +
+                '<div class="session-date">' + escHtml(date) + '</div>' +
+                '<div class="session-platforms">' + badges + '</div>' +
+                '</div>';
+      });
+      list.innerHTML = html;
+
+      list.querySelectorAll('.session-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const folder = row.dataset.folder;
+          if (folder) {
+            loadSessionResults(folder);
+            $$('.tab')[1].click();
+          }
+        });
+      });
+
+    } catch(e) {
+      console.error('Failed to load history', e);
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────
+  function showBanner(msg, isError) {
+    const b = $('#result-banner');
+    b.textContent = msg;
+    b.className = 'result-banner visible' + (isError ? ' error' : '');
+  }
+
+  function resetForm() {
+    $('#form-section').style.display = '';
+    $('#progress-section').classList.remove('active');
+    $('#run-btn').disabled = false;
+  }
+
+  function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ── Init ─────────────────────────────────────
+  loadStyles();
+})();
+</script>
+</body>
+</html>

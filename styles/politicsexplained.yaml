@@ -1,0 +1,25 @@
+name: politicsexplained
+tone: >-
+  Warm and professional. Written for parents via an agency platform that
+  has a single text box. Concise but informative — parents want to know
+  what happened and what's next without reading an essay.
+word_limit: 200
+format: narrative
+output_format: text
+required_sections: []
+do_rules:
+  - Keep it between 100 and 200 words
+  - Open with what was covered in the session
+  - Mention one or two specific positives with brief evidence
+  - Note any areas to work on, framed constructively
+  - End with what will be focused on next time or homework set
+  - Use the student's first name naturally
+  - Write as one or two short paragraphs, no headings needed
+dont_rules:
+  - Do not use section headings or bullet points
+  - Do not include tutor private notes
+  - Do not exceed 200 words
+  - Do not use jargon or overly technical language
+  - Do not mention audio quality or technical issues
+  - Do not speculate about diagnoses or learning difficulties
+  - Do not quote the transcript

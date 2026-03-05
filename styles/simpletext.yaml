@@ -1,0 +1,24 @@
+name: simpletext
+tone: >-
+  Casual and friendly. This is a WhatsApp message to a parent or student.
+  Brief, warm, human. Like a quick text from someone who genuinely enjoyed
+  the session.
+word_limit: 50
+format: chat
+output_format: text
+required_sections: []
+do_rules:
+  - Write exactly 2-3 sentences, no more
+  - Sound like a real person texting, not a formal report
+  - Mention one highlight from the session
+  - Include what to work on or look forward to next time
+  - Use the student's first name
+  - Keep it under 50 words
+dont_rules:
+  - Do not use headings, bullet points, or any formatting
+  - Do not use emojis
+  - Do not include tutor private notes
+  - Do not be formal or stiff
+  - Do not write more than 3 sentences
+  - Do not mention homework details (save that for other platforms)
+  - Do not quote the transcript

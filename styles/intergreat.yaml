@@ -1,0 +1,69 @@
+name: intergreat
+tone: >-
+  Professional and structured. Written for a tutoring agency platform where
+  coordinators and parents both read the feedback. Clear, evidence-based,
+  and constructive. No fluff.
+word_limit: 600
+format: fields
+output_format: fields
+fields:
+  - name: session_summary
+    label: Session Summary
+    description: >-
+      Brief overview of what was covered in the session and the student's
+      general engagement. 2-3 sentences.
+    word_limit: 60
+    required: true
+  - name: topics_covered
+    label: Topics Covered
+    description: >-
+      Comma-separated list of the specific topics or skills worked on.
+    word_limit: 30
+    required: true
+  - name: progress
+    label: Progress & Strengths
+    description: >-
+      What the student did well this session. Specific, evidence-based
+      observations. Use bullet points, each starting with a dash.
+    word_limit: 100
+    required: true
+  - name: areas_for_development
+    label: Areas for Development
+    description: >-
+      Where the student needs more work. Frame constructively. Use bullet
+      points, each starting with a dash.
+    word_limit: 100
+    required: true
+  - name: homework_set
+    label: Homework Set
+    description: >-
+      What homework was assigned, with clear instructions. If none, say
+      "No homework set this session."
+    word_limit: 80
+    required: true
+  - name: next_session_focus
+    label: Next Session Focus
+    description: >-
+      What should be prioritised in the next lesson. 1-2 sentences.
+    word_limit: 40
+    required: true
+  - name: additional_notes
+    label: Additional Notes
+    description: >-
+      Any other observations worth sharing with the coordinator or parent.
+      Leave empty if nothing to add.
+    word_limit: 50
+    required: false
+required_sections: []
+do_rules:
+  - Use the student's first name
+  - Be specific about what was practised and how the student responded
+  - Frame weaknesses as areas for development, not failures
+  - Keep each field concise and within its word limit
+  - Use evidence from the session, not generic statements
+dont_rules:
+  - Do not include tutor private notes or internal observations
+  - Do not speculate about diagnoses or learning difficulties
+  - Do not use vague praise like "did well" without specifics
+  - Do not mention audio quality or technical issues
+  - Do not quote raw transcript text
